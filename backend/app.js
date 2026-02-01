@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import bookingRoutes from './routes/booking.routes.js';
-
+import verifyAuth from './middlewares/authMiddleware.js';
 dotenv.config();
 const app = express();
 
@@ -20,6 +20,6 @@ app.get('/health', (req, res) => {
 });
 
 //for the sending to the booking route
-app.use('/api/bookings', bookingRoutes);
+app.use('/api/bookings',verifyAuth, bookingRoutes);
 
 export default app;

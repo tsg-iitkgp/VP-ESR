@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -7,6 +7,7 @@ import { DatePicker } from './DatePicker';
 import { RoomSelector } from './RoomSelector';
 import { TimelineView } from './TimelineView';
 import { BookingForm } from './BookingForm';
+import { useAuth } from '../context/AuthContext';
 
 export interface Booking {
   id: string;
@@ -23,8 +24,20 @@ const API_BASE = `${
   import.meta.env.VITE_APP_API_PREFIX || 'http://localhost:5001'
 }/api/bookings`;
 
+
+  // Helper to get auth headers
+  const getAuthHeaders = (): HeadersInit => {
+    const token = localStorage.getItem('token');
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  };
+
 const BookingTimeline = () => {
   const navigate = useNavigate();
+  const { user , logout } = useAuth();
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedRoom, setSelectedRoom] = useState('ESR Room');
@@ -32,20 +45,30 @@ const BookingTimeline = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const formatDate = (date: Date) => date.toISOString().split('T')[0];
+  // Format date in local timezone (YYYY-MM-DD) - IMPORTANT: toISOString() uses UTC which causes date shift!
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+
 
   // ✅ GET bookings
   const fetchBookings = async () => {
     try {
       setLoading(true);
       const formattedDate = formatDate(selectedDate);
-      // console.log('📅 Fetching bookings for date:', formattedDate, 'and room:', selectedRoom);
-
-      const res = await fetch(`${API_BASE}?date=${formattedDate}`);
-      // console.log('📡 GET status:', res.status);
+      const res = await fetch(`${API_BASE}?date=${formattedDate}`, {
+        headers: getAuthHeaders(),
+      });
 
       if (!res.ok) {
-        // console.error('❌ GET failed');
+        if (res.status === 401) {
+          console.warn('Auth failed for bookings fetch - backend may be unavailable');
+          // Don't logout - just show empty bookings
+        }
         return;
       }
 
@@ -57,22 +80,23 @@ const BookingTimeline = () => {
           const roomName = b.room === 'esr' ? 'ESR Room' : 'VP Room';
           return roomName === selectedRoom;
         })
-        .map((b: any) => ({
-          id: b._id,
-          name: b.name,
-          title: b.title,
-          startTime: new Date(b.startTime).toLocaleTimeString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-          endTime: new Date(b.endTime).toLocaleTimeString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-          room: b.room === 'esr' ? 'ESR Room' : 'VP Room',
-          date: new Date(b.startTime),
-          purpose: b.description,
-        }));
+        .map((b: any) => {
+          const startDate = new Date(b.startTime);
+          const endDate = new Date(b.endTime);
+          // Format times as HH:00 to match timeline slots exactly
+          const startHour = startDate.getHours().toString().padStart(2, '0');
+          const endHour = endDate.getHours().toString().padStart(2, '0');
+          return {
+            id: b._id,
+            name: b.name,
+            title: b.title,
+            startTime: `${startHour}:00`,
+            endTime: `${endHour}:00`,
+            room: b.room === 'esr' ? 'ESR Room' : 'VP Room',
+            date: startDate,
+            purpose: b.description,
+          };
+        });
 
       // console.log('✅ Transformed bookings for timeline:', transformed);
       setBookings(transformed);
@@ -137,7 +161,7 @@ const BookingTimeline = () => {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-              Room Booking Timeline
+              Welcome {user?.name}
             </h1>
             <p className="text-muted-foreground mt-1 text-sm sm:text-base">
               Timeline for booking ESR and VP room • Book available slots

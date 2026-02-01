@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, LogOut, User } from 'lucide-react';
 
 interface Booking {
   _id: string;
@@ -10,27 +14,48 @@ interface Booking {
   name: string;
 }
 
+// Helper to get auth headers
+const getAuthHeaders = (): HeadersInit => {
+  const token = localStorage.getItem('token');
+  const headers: HeadersInit = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 const MyBookings: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const userName = 'Roshil Singh';
+  // Use authenticated user's name
+  const userName = user?.name || '';
 
-  const API_PREFIX = process.env.VITE_APP_API_PREFIX || 'http://localhost:5001';
+  const API_PREFIX = import.meta.env.VITE_APP_API_PREFIX || 'http://localhost:5001';
+
   const fetchMyBookings = async () => {
+    if (!userName) return;
+
     setLoading(true);
     setError('');
     try {
       const res = await fetch(
-        `${API_PREFIX}/api/bookings/myBookings?name=${encodeURIComponent(
-          userName
-        )}`
+        `${API_PREFIX}/api/bookings/myBookings?name=${encodeURIComponent(userName)}`,
+        { headers: getAuthHeaders() }
       );
+
+      if (res.status === 401) {
+        console.warn('Auth failed for fetching bookings');
+        setError('Authentication failed');
+        return;
+      }
+
       if (!res.ok) throw new Error('Failed to fetch bookings');
       const data = await res.json();
-      // console.log("Fetched bookings:", data);
       setBookings(data);
     } catch (err: any) {
       setError(err.message || 'Something went wrong');
@@ -58,7 +83,14 @@ const MyBookings: React.FC = () => {
     try {
       const res = await fetch(`${API_PREFIX}/api/bookings?_id=${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
       });
+
+      if (res.status === 401) {
+        console.warn('Auth failed for delete');
+        return;
+      }
+
       if (!res.ok) throw new Error('Failed to delete booking');
       setBookings((prev) => prev.filter((b) => b._id !== id));
 
@@ -86,19 +118,41 @@ const MyBookings: React.FC = () => {
 
   useEffect(() => {
     fetchMyBookings();
-  }, []);
+  }, [userName]);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6 sm:p-10">
-      <h1 className="text-3xl font-bold mb-6 text-center sm:text-left">
-        My Bookings
-      </h1>
+      {/* User Info Bar */}
+      <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3 mb-6 border border-gray-700">
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <User className="h-4 w-4" />
+          <span>Welcome, <strong className="text-white">{user?.name || 'User'}</strong></span>
+        </div>
+        <Button variant="ghost" size="sm" onClick={logout} className="text-gray-400 hover:text-red-400">
+          <LogOut className="h-4 w-4 mr-1" />
+          Logout
+        </Button>
+      </div>
+
+      {/* Header with back button */}
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/')}
+          className="text-gray-400 hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back
+        </Button>
+        <h1 className="text-3xl font-bold">My Bookings</h1>
+      </div>
 
       {loading && <p>Loading your bookings...</p>}
       {error && <p className="text-red-500">{error}</p>}
 
       {!loading && !error && bookings.length === 0 && (
-        <p className="text-gray-400">No bookings found.</p>
+        <p className="text-gray-400">No bookings found for {userName}.</p>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -115,7 +169,7 @@ const MyBookings: React.FC = () => {
             <div className="text-sm text-gray-300 space-y-1">
               <p>
                 <span className="font-medium text-gray-200">Room:</span>{' '}
-                {booking.room}
+                {booking.room === 'esr' ? 'ESR Room' : 'VP Room'}
               </p>
               <p>
                 <span className="font-medium text-gray-200">Date:</span>{' '}

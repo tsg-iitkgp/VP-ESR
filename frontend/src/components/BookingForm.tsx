@@ -39,6 +39,9 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/context/AuthContext';
+
+/* ---------------- Schema ---------------- */
 
 const bookingSchema = z
   .object({
@@ -70,6 +73,8 @@ interface BookingFormProps {
   onSubmit: (data: BookingFormData) => void;
 }
 
+/* ---------------- Constants ---------------- */
+
 const rooms = [
   {
     value: 'ESR Room',
@@ -83,6 +88,8 @@ const timeSlots = Array.from({ length: 24 }, (_, i) => {
   return { value: `${hour}:00`, label: `${hour}:00` };
 });
 
+/* ---------------- Component ---------------- */
+
 export const BookingForm: React.FC<BookingFormProps> = ({
   open,
   onOpenChange,
@@ -90,11 +97,12 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 }) => {
   const { toast } = useToast();
   const [calendarOpen, setCalendarOpen] = React.useState(false);
+  const { user } = useAuth();
 
   const form = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
-      name: '',
+      name: user?.name || '',
       title: '',
       room: '',
       startTime: '',
@@ -102,6 +110,29 @@ export const BookingForm: React.FC<BookingFormProps> = ({
       purpose: '',
     },
   });
+
+  /* 🔹 Sync JWT name */
+  React.useEffect(() => {
+    if (user?.name) {
+      form.reset({
+        ...form.getValues(),
+        name: user.name,
+      });
+    }
+  }, [user, form]);
+
+  /* 🔹 Date helpers */
+  const isToday = (date?: Date) => {
+    if (!date) return false;
+    const now = new Date();
+    return (
+      date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear()
+    );
+  };
+
+  const currentHour = new Date().getHours();
 
   const handleSubmit = (data: BookingFormData) => {
     if (!data.date) return;
@@ -122,7 +153,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* ✅ Removed overflow-y-auto, added responsive width */}
       <DialogContent className="sm:max-w-[600px] w-[95vw] p-6">
         <DialogHeader>
           <DialogTitle>New Room Booking</DialogTitle>
@@ -146,7 +176,11 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                   <FormItem>
                     <FormLabel>Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your full name" {...field} />
+                      <Input
+                        {...field}
+                        disabled
+                        className="bg-muted cursor-not-allowed"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -234,7 +268,11 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                           field.onChange(d);
                           setCalendarOpen(false);
                         }}
-                        disabled={(date) => date < new Date()}
+                        disabled={(date) => {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          return date < today;
+                        }}
                         initialFocus
                         className="p-3 pointer-events-auto"
                       />
@@ -264,17 +302,23 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {timeSlots.map((time) => (
-                          <SelectItem key={time.value} value={time.value}>
-                            {time.label}
-                          </SelectItem>
-                        ))}
+                        {timeSlots
+                          .filter((time) => {
+                            if (!isToday(form.watch('date'))) return true;
+                            return parseInt(time.value) > currentHour;
+                          })
+                          .map((time) => (
+                            <SelectItem key={time.value} value={time.value}>
+                              {time.label}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="endTime"
@@ -292,11 +336,16 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {timeSlots.map((time) => (
-                          <SelectItem key={time.value} value={time.value}>
-                            {time.label}
-                          </SelectItem>
-                        ))}
+                        {timeSlots
+                          .filter((time) => {
+                            if (!isToday(form.watch('date'))) return true;
+                            return parseInt(time.value) > currentHour;
+                          })
+                          .map((time) => (
+                            <SelectItem key={time.value} value={time.value}>
+                              {time.label}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -340,3 +389,4 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     </Dialog>
   );
 };
+
