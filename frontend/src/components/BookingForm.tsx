@@ -132,7 +132,8 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     );
   };
 
-  const currentHour = new Date().getHours();
+  // Helper to get current hour fresh each time - used for filtering time slots
+  const getCurrentHour = () => new Date().getHours();
 
   const handleSubmit = (data: BookingFormData) => {
     if (!data.date) return;
@@ -305,7 +306,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                         {timeSlots
                           .filter((time) => {
                             if (!isToday(form.watch('date'))) return true;
-                            return parseInt(time.value) > currentHour;
+                            return parseInt(time.value) > getCurrentHour();
                           })
                           .map((time) => (
                             <SelectItem key={time.value} value={time.value}>
@@ -339,7 +340,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                         {timeSlots
                           .filter((time) => {
                             if (!isToday(form.watch('date'))) return true;
-                            return parseInt(time.value) > currentHour;
+                            return parseInt(time.value) > getCurrentHour();
                           })
                           .map((time) => (
                             <SelectItem key={time.value} value={time.value}>

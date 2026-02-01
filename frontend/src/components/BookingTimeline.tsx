@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus } from 'lucide-react';
+import { Plus, LogOut, User } from 'lucide-react';
 import { DatePicker } from './DatePicker';
 import { RoomSelector } from './RoomSelector';
 import { TimelineView } from './TimelineView';
@@ -20,24 +20,23 @@ export interface Booking {
   purpose?: string;
 }
 
-const API_BASE = `${
-  import.meta.env.VITE_APP_API_PREFIX || 'http://localhost:5001'
-}/api/bookings`;
+const API_BASE = `${import.meta.env.VITE_APP_API_PREFIX || 'http://localhost:5001'
+  }/api/bookings`;
 
 
-  // Helper to get auth headers
-  const getAuthHeaders = (): HeadersInit => {
-    const token = localStorage.getItem('token');
-    const headers: HeadersInit = { 'Content-Type': 'application/json' };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    return headers;
-  };
+// Helper to get auth headers
+const getAuthHeaders = (): HeadersInit => {
+  const token = localStorage.getItem('token');
+  const headers: HeadersInit = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
 
 const BookingTimeline = () => {
   const navigate = useNavigate();
-  const { user , logout } = useAuth();
+  const { user, logout } = useAuth();
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedRoom, setSelectedRoom] = useState('ESR Room');
@@ -125,7 +124,7 @@ const BookingTimeline = () => {
 
       const res = await fetch(API_BASE, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(body),
       });
 
@@ -157,6 +156,18 @@ const BookingTimeline = () => {
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* User Info Bar */}
+        <div className="flex items-center justify-between bg-card rounded-lg p-3 border border-border">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <User className="h-4 w-4" />
+            <span>Welcome, <strong className="text-foreground">{user?.name || 'User'}</strong></span>
+          </div>
+          <Button variant="ghost" size="sm" onClick={logout} className="text-muted-foreground hover:text-destructive">
+            <LogOut className="h-4 w-4 mr-1" />
+            Logout
+          </Button>
+        </div>
+
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
