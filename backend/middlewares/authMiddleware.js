@@ -11,6 +11,12 @@ const verifyAuth = async (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Validate issuer and audience claims
+        if (decoded.iss !== 'admin-backend' || decoded.aud !== 'vp-esr') {
+            return res.status(401).json({ message: 'Invalid token claims' });
+        }
+
         req.user = {
             id: decoded.id,
             email: decoded.email,

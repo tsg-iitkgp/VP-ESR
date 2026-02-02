@@ -57,7 +57,9 @@ const bookingSchema = z
     (data) => {
       const start = parseInt(data.startTime.split(':')[0]);
       const end = parseInt(data.endTime.split(':')[0]);
-      return end > start;
+      // Allow midnight (00:00) as end time - treat as 24 for 11pm to 12am bookings
+      const adjustedEnd = end === 0 ? 24 : end;
+      return adjustedEnd > start;
     },
     {
       message: 'End time must be after start time',
@@ -139,15 +141,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     if (!data.date) return;
 
     onSubmit(data);
-
-    toast({
-      title: 'Booking Created',
-      description: `Room ${data.room} booked for ${format(
-        data.date,
-        'PPP'
-      )} from ${data.startTime} to ${data.endTime}`,
-    });
-
     form.reset();
     onOpenChange(false);
   };
@@ -340,7 +333,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                         {timeSlots
                           .filter((time) => {
                             if (!isToday(form.watch('date'))) return true;
-                            return parseInt(time.value) > getCurrentHour();
+                            const hour = parseInt(time.value);
+                            // Always allow midnight (00:00) as end time option
+                            if (hour === 0) return true;
+                            return hour > getCurrentHour();
                           })
                           .map((time) => (
                             <SelectItem key={time.value} value={time.value}>

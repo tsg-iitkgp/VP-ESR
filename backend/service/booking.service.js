@@ -30,7 +30,12 @@ export const createBookingService = async (bookingData) => {
   }
 
   const startDateTime = new Date(`${date}T${startTime}`);
-  const endDateTime = new Date(`${date}T${endTime}`);
+  let endDateTime = new Date(`${date}T${endTime}`);
+
+  // Handle midnight (00:00) end time - means end of day/next day midnight
+  if (endTime === '00:00') {
+    endDateTime.setDate(endDateTime.getDate() + 1);
+  }
 
   if (startDateTime >= endDateTime) {
     const error = new Error('End time must be after start time');
@@ -40,15 +45,20 @@ export const createBookingService = async (bookingData) => {
 
   // The conflict check uses the room name string
   const conflictingBooking = await Booking.findOne({
-    room: room, 
+    room: room,
     startTime: { $lt: endDateTime },
     endTime: { $gt: startDateTime },
   });
 
   if (conflictingBooking) {
-    const error = new Error('Time slot is already booked for this room.');
+    const conflictStart = new Date(conflictingBooking.startTime);
+    const conflictEnd = new Date(conflictingBooking.endTime);
+    const startHour = conflictStart.getHours().toString().padStart(2, '0');
+    const endHour = conflictEnd.getHours().toString().padStart(2, '0');
+
+    const error = new Error(`Booking clashes with ${conflictingBooking.name}'s booking (${startHour}:00 - ${endHour}:00)`);
     error.statusCode = 409;
-    throw error.message;
+    throw error;
   }
 
   // Create the new booking
@@ -65,24 +75,24 @@ export const createBookingService = async (bookingData) => {
 };
 
 
-export const delBooking = async(_id)=>{
-  if(!_id){
+export const delBooking = async (_id) => {
+  if (!_id) {
     const error = new Error('Id not found for deleting the booking in service');
     error.statusCode = 409;
     throw error.message;
   }
-  const del = await Booking.deleteOne({_id});
-  
+  const del = await Booking.deleteOne({ _id });
+
   return del;
 }
 
-export const bookingByName = async(name)=>{
-  if(!name){
+export const bookingByName = async (name) => {
+  if (!name) {
     const error = new Error('No name found while fetching using name');
     error.statusCode = 409;
     throw error.message;
   }
-  const bookings = await Booking.find({name:name});
+  const bookings = await Booking.find({ name: name });
   return bookings;
 
 }

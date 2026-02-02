@@ -7,15 +7,15 @@ interface TimelineViewProps {
   bookings: Booking[];
 }
 
-export const TimelineView: React.FC<TimelineViewProps> = ({ 
-  selectedDate, 
-  selectedRoom, 
-  bookings 
+export const TimelineView: React.FC<TimelineViewProps> = ({
+  selectedDate,
+  selectedRoom,
+  bookings
 }) => {
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString('en-US', {
       weekday: 'long',
-      month: 'long', 
+      month: 'long',
       day: 'numeric',
       year: 'numeric'
     });
@@ -35,24 +35,29 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   const getBookingForTimeSlot = (timeSlot: string) => {
     return bookings.find(booking => {
       const [bookingStartHour] = booking.startTime.split(':').map(Number);
-      const [bookingEndHour] = booking.endTime.split(':').map(Number);
+      let [bookingEndHour] = booking.endTime.split(':').map(Number);
       const [slotHour] = timeSlot.split(':').map(Number);
-      
+
+      // Handle midnight (00:00) as 24 for comparison
+      if (bookingEndHour === 0) bookingEndHour = 24;
+
       return slotHour >= bookingStartHour && slotHour < bookingEndHour;
     });
   };
 
   const getBookingSpan = (booking: Booking) => {
     const [startHour] = booking.startTime.split(':').map(Number);
-    const [endHour] = booking.endTime.split(':').map(Number);
+    let [endHour] = booking.endTime.split(':').map(Number);
+    // Handle midnight (00:00) as 24 for calculation
+    if (endHour === 0) endHour = 24;
     return endHour - startHour;
   };
 
   const renderBookingBlock = (booking: Booking, span: number) => {
     return (
-      <div 
+      <div
         className="bg-primary text-primary-foreground p-4 rounded-lg ml-16"
-        style={{ 
+        style={{
           gridRowEnd: `span ${span}`,
           minHeight: `${span * 4}rem`
         }}
@@ -77,14 +82,14 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
           {timeSlots.map((timeSlot, index) => {
             const booking = getBookingForTimeSlot(timeSlot);
             const isBookingStart = booking && booking.startTime === timeSlot;
-            
+
             // Skip rendering rows that are part of a multi-hour booking (except the start)
             if (booking && !isBookingStart) {
               return null;
             }
 
             return (
-              <div 
+              <div
                 key={timeSlot}
                 className="flex items-start min-h-16 border-b border-timeline-border/30 last:border-b-0"
               >
@@ -96,7 +101,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                     {parseInt(timeSlot.split(':')[0]) < 12 ? 'AM' : 'PM'}
                   </div>
                 </div>
-                
+
                 <div className="flex-1 py-2">
                   {isBookingStart && booking ? (
                     renderBookingBlock(booking, getBookingSpan(booking))

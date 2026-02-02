@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { url } from 'inspector';
 
 interface User {
     id: string;
@@ -15,6 +14,8 @@ interface DecodedToken {
     email?: string;
     role?: string;
     name?: string;
+    iss?: string;
+    aud?: string;
 }
 
 interface AuthContextType {
@@ -26,31 +27,35 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Helper function to get initial auth state synchronously
-const getInitialAuthState = (): { user: User | null; isLoading: boolean } => {
+// Exchange authorization code with backend
+const exchangeCodeForToken = async (code: string): Promise<{ token: string; user: User } | null> => {
     try {
-        // Check URL for token first
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlToken = urlParams.get('token');
-        const urlRole = urlParams.get('role');
-        const urlName = urlParams.get('name');
+        const apiUrl = import.meta.env.VITE_APP_API_PREFIX || 'http://localhost:5001';
+        const response = await fetch(`${apiUrl}/api/auth/callback`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ code })
+        });
 
-        if (urlToken) {
-            localStorage.setItem('token', urlToken);
-            if (urlRole) {
-                localStorage.setItem('role', urlRole);
-            }
-            if(urlName){
-                localStorage.setItem('name', urlName);
-            }
-            // Clean URL immediately
-            window.history.replaceState({}, document.title, window.location.pathname);
+        if (!response.ok) {
+            console.error('Failed to exchange code:', await response.text());
+            return null;
         }
 
+        return await response.json();
+    } catch (error) {
+        console.error('Error exchanging code:', error);
+        return null;
+    }
+};
+
+// Get auth state from localStorage token
+const getAuthStateFromToken = (): User | null => {
+    try {
         const token = localStorage.getItem('token');
-        if (!token) {
-            return { user: null, isLoading: false };
-        }
+        if (!token) return null;
 
         const decoded: DecodedToken = jwtDecode(token);
 
@@ -58,35 +63,74 @@ const getInitialAuthState = (): { user: User | null; isLoading: boolean } => {
         if (decoded.exp && decoded.exp * 1000 < Date.now()) {
             localStorage.removeItem('token');
             localStorage.removeItem('role');
-            return { user: null, isLoading: false };
+            localStorage.removeItem('name');
+            return null;
         }
 
-        // Create user
-        const user: User = {
+        // Validate issuer and audience
+        if (decoded.iss !== 'admin-backend' || decoded.aud !== 'vp-esr') {
+            console.error('Invalid token claims');
+            localStorage.removeItem('token');
+            return null;
+        }
+
+        return {
             id: decoded.id || 'unknown',
             name: localStorage.getItem('name') || '',
             email: decoded.email || '',
             role: decoded.role || localStorage.getItem('role') || 'viewer'
         };
-
-        return { user, isLoading: false };
     } catch (error) {
-        console.error('Initial auth check failed:', error);
+        console.error('Token validation failed:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('role');
-        return { user: null, isLoading: false };
+        localStorage.removeItem('name');
+        return null;
     }
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    // Initialize state synchronously from token
-    const initialState = getInitialAuthState();
-    const [user, setUser] = useState<User | null>(initialState.user);
-    const [isLoading, setIsLoading] = useState(initialState.isLoading);
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const initAuth = async () => {
+            // Check for authorization code in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const name = urlParams.get('name');
+
+            if (code) {
+                // Clean URL immediately
+                window.history.replaceState({}, document.title, window.location.pathname);
+
+                // Exchange code for token via backend
+                const result = await exchangeCodeForToken(code);
+                result.user.name = name;
+                if (result) {
+                    localStorage.setItem('token', result.token);
+                    if (result.user.role) localStorage.setItem('role', result.user.role);
+                    if (result.user.name) localStorage.setItem('name', result.user.name);
+                    setUser(result.user);
+                }
+                setIsLoading(false);
+                return;
+            }
+
+            // No code, check existing token
+            const existingUser = getAuthStateFromToken();
+            setUser(existingUser);
+            setIsLoading(false);
+            console.log(localStorage.getItem('name'));
+        };
+
+        initAuth();
+    }, []);
 
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('role');
+        localStorage.removeItem('name');
         setUser(null);
         window.location.href = import.meta.env.VITE_ADMIN_LOGIN_URL;
     };

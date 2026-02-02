@@ -8,9 +8,14 @@ import {
 
 
 export const createBooking = asyncHandler(async (req, res) => {
-  const bookingData = req.body;
-  const newBooking = await createBookingService(bookingData);
-  res.status(201).json(newBooking);
+  try {
+    const bookingData = req.body;
+    const newBooking = await createBookingService(bookingData);
+    res.status(201).json(newBooking);
+  } catch (error) {
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({ message: error.message || 'Failed to create booking' });
+  }
 });
 
 
@@ -24,24 +29,24 @@ export const getBookingsByDate = asyncHandler(async (req, res) => {
   res.status(200).json(bookings);
 });
 
-export const deleteBooking = asyncHandler(async(req,res)=>{
-  const {_id} = req.query;
-  if(!_id){
+export const deleteBooking = asyncHandler(async (req, res) => {
+  const { _id } = req.query;
+  if (!_id) {
     res.status(400);
     throw new Error('Id is required for Deleting')
   }
   const del = await delBooking(_id);
 
-  if(del.deletedCount == 0){
+  if (del.deletedCount == 0) {
     res.status(400);
     throw new Error('No such booking found while deleting')
   }
   res.status(200).json(del);
 })
 
-export const getBookingsByName = asyncHandler(async(req,res)=>{
-  const {name} = req.query;
-  if(!name){
+export const getBookingsByName = asyncHandler(async (req, res) => {
+  const { name } = req.query;
+  if (!name) {
     res.status(400);
     throw new Error('Name is required for fetching')
   }

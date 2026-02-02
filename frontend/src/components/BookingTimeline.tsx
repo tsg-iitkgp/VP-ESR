@@ -8,6 +8,7 @@ import { RoomSelector } from './RoomSelector';
 import { TimelineView } from './TimelineView';
 import { BookingForm } from './BookingForm';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 export interface Booking {
   id: string;
@@ -37,6 +38,7 @@ const getAuthHeaders = (): HeadersInit => {
 const BookingTimeline = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { toast } = useToast();
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedRoom, setSelectedRoom] = useState('ESR Room');
@@ -109,8 +111,6 @@ const BookingTimeline = () => {
   // ✅ POST new booking
   const handleBookingSubmit = async (bookingData: any) => {
     try {
-      // console.log('📤 Sending booking to backend:', bookingData);
-
       const body = {
         name: bookingData.name,
         title: bookingData.title,
@@ -120,7 +120,6 @@ const BookingTimeline = () => {
         endTime: bookingData.endTime,
         description: bookingData.purpose || '',
       };
-      // console.log(body);
 
       const res = await fetch(API_BASE, {
         method: 'POST',
@@ -128,16 +127,22 @@ const BookingTimeline = () => {
         body: JSON.stringify(body),
       });
 
-      // console.log('📡 POST status:', res.status);
-
       if (!res.ok) {
         const err = await res.json();
-        alert(err.message || 'Failed to create booking');
+        toast({
+          title: 'Booking Failed',
+          description: err.message || 'Failed to create booking',
+          variant: 'destructive',
+        });
         return;
       }
 
       const newBooking = await res.json();
-      // console.log('✅ Booking created successfully:', newBooking);
+
+      toast({
+        title: 'Booking Created',
+        description: `${bookingData.room} booked for ${bookingData.startTime} to ${bookingData.endTime}`,
+      });
 
       setSelectedDate(new Date(bookingData.date));
       setSelectedRoom(bookingData.room);
@@ -145,7 +150,11 @@ const BookingTimeline = () => {
       await fetchBookings();
       setShowBookingForm(false);
     } catch (err) {
-      // console.error('💥 Error creating booking:', err);
+      toast({
+        title: 'Error',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 

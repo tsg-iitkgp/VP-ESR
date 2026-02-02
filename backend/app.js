@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import bookingRoutes from './routes/booking.routes.js';
+import authRoutes from './routes/auth.routes.js';
 import verifyAuth from './middlewares/authMiddleware.js';
 dotenv.config();
 const app = express();
@@ -19,7 +20,10 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Auth routes (public - for code exchange)
+app.use('/api/auth', authRoutes);
+
 //for the sending to the booking route
-app.use('/api/bookings',verifyAuth, bookingRoutes);
+app.use('/api/bookings', verifyAuth, bookingRoutes);
 
 export default app;
