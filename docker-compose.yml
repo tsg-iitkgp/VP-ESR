@@ -12,6 +12,7 @@ services:
       - MONGODB_URI=${MONGODB_URI:?MONGODB_URI is required}
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
       - AUTH_SERVER_URL=${AUTH_SERVER_URL:?AUTH_SERVER_URL is required}
+      - TZ=Asia/Kolkata
     env_file:
       - ./backend/.env
     ports:

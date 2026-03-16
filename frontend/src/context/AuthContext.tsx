@@ -121,8 +121,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // Exchange code for token via backend
         const result = await exchangeCodeForToken(code);
-        result.user.name = name;
         if (result) {
+          result.user.name = name;
           localStorage.setItem('token', result.token);
           if (result.user.role) localStorage.setItem('role', result.user.role);
           if (result.user.name) localStorage.setItem('name', result.user.name);

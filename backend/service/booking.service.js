@@ -29,8 +29,10 @@ export const createBookingService = async (bookingData) => {
     throw error;
   }
 
-  const startDateTime = new Date(`${date}T${startTime}`);
-  let endDateTime = new Date(`${date}T${endTime}`);
+  // Append IST offset (+05:30) so times are always interpreted as IST,
+  // regardless of the server/container timezone setting
+  const startDateTime = new Date(`${date}T${startTime}+05:30`);
+  let endDateTime = new Date(`${date}T${endTime}+05:30`);
 
   // Handle midnight (00:00) end time - means end of day/next day midnight
   if (endTime === '00:00') {
