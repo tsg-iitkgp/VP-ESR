@@ -17,7 +17,6 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
 COPY . .
-EXPOSE 5001
 CMD ["npm", "run", "dev"]
 
 # Production stage
@@ -36,9 +35,6 @@ COPY --chown=nodejs:nodejs . .
 
 # Switch to non-root user
 USER nodejs
-
-# Expose port
-EXPOSE 5001
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

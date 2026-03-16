@@ -1,9 +1,14 @@
 // Simple health check endpoint
 import http from 'http';
 
+if (!process.env.PORT) {
+  console.error('PORT is required for healthcheck');
+  process.exit(1);
+}
+
 const options = {
   host: 'localhost',
-  port: process.env.PORT || 5001,
+  port: process.env.PORT,
   path: '/health',
   timeout: 2000,
 };

@@ -7,11 +7,15 @@ services:
     container_name: vp-esr-backend
     restart: unless-stopped
     environment:
-      - NODE_ENV=production
-      - PORT=${BACKEND_PORT}
-      - MONGODB_URI=${MONGODB_URI}
+      - NODE_ENV=${NODE_ENV:?NODE_ENV is required}
+      - PORT=${BACKEND_PORT:?BACKEND_PORT is required}
+      - MONGODB_URI=${MONGODB_URI:?MONGODB_URI is required}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
+      - AUTH_SERVER_URL=${AUTH_SERVER_URL:?AUTH_SERVER_URL is required}
     env_file:
       - ./backend/.env
+    ports:
+      - "${BACKEND_PORT:?BACKEND_PORT is required}:${BACKEND_PORT:?BACKEND_PORT is required}"
     networks:
       - app-network
     volumes:
@@ -29,46 +33,24 @@ services:
       dockerfile: Dockerfile
       target: production
       args:
-        - VITE_APP_API_PREFIX=${VITE_APP_API_PREFIX}
+        - VITE_APP_API_PREFIX=${VITE_APP_API_PREFIX:?VITE_APP_API_PREFIX is required}
+        - VITE_ADMIN_LOGIN_URL=${VITE_ADMIN_LOGIN_URL:?VITE_ADMIN_LOGIN_URL is required}
     container_name: vp-esr-frontend
     restart: unless-stopped
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=${NODE_ENV:?NODE_ENV is required}
+      - FRONTEND_PORT=${FRONTEND_PORT:?FRONTEND_PORT is required}
     env_file:
       - ./frontend/.env
     ports:
-      - "8080:8080"
+      - "${FRONTEND_PORT:?FRONTEND_PORT is required}:${FRONTEND_PORT:?FRONTEND_PORT is required}"
     networks:
       - app-network
     depends_on:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-  # Reverse proxy for production deployment
-  nginx:
-    image: nginx:alpine
-    container_name: vp-esr-proxy
-    restart: unless-stopped
-    ports:
-      - "${PROXY_PORT:-80}:80"
-      - "${PROXY_SSL_PORT:-443}:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - nginx-logs:/var/log/nginx
-    networks:
-      - app-network
-    depends_on:
-      - frontend
-      - backend
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "node", "-e", "const p=process.env.FRONTEND_PORT; if(!p){process.exit(1)} fetch('http://localhost:'+p+'/').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -81,6 +63,4 @@ networks:
 
 volumes:
   backend-logs:
-    driver: local
-  nginx-logs:
     driver: local
