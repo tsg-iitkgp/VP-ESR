@@ -92,7 +92,14 @@ export const bookingByName = async (name) => {
     error.statusCode = 409;
     throw error.message;
   }
-  const bookings = await Booking.find({ name: name });
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // start of today
+
+  const bookings = await Booking.find({
+    name: name,
+    endTime: { $gte: today }
+  }).sort({ startTime: 'asc' });
+
   return bookings;
 
 }

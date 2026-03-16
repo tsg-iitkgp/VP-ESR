@@ -156,7 +156,17 @@ const MyBookings: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {bookings.map((booking) => (
+        {bookings
+          .filter((booking) => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const bookingDate = new Date(booking.startTime);
+            bookingDate.setHours(0, 0, 0, 0);
+
+            return bookingDate >= today;
+          })
+          .map((booking) => (
           <div
             key={booking._id}
             className="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 flex flex-col gap-3"
