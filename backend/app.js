@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bookingRoutes from './routes/booking.routes.js';
 import authRoutes from './routes/auth.routes.js';
+import mobileRoutes from './routes/mobile/mobile.routes.js';
 import verifyAuth from './middlewares/authMiddleware.js';
 dotenv.config();
 const app = express();
@@ -25,5 +26,8 @@ app.use('/api/auth', authRoutes);
 
 //for the sending to the booking route
 app.use('/api/bookings', verifyAuth, bookingRoutes);
+
+// Mobile routes
+app.use('/api/mobile', mobileRoutes);
 
 export default app;

@@ -7,10 +7,8 @@ import { Booking } from '../models/booking.models.js';
 export const getBookingsByDateService = async (dateString) => {
   const date = parseISO(dateString);
   const bookings = await Booking.find({
-    startTime: {
-      $gte: startOfDay(date),
-      $lt: endOfDay(date),
-    },
+    startTime: { $lt: endOfDay(date) },
+    endTime: { $gt: startOfDay(date) },
   }).sort({ startTime: 'asc' });
 
   return bookings;
@@ -34,32 +32,38 @@ export const createBookingService = async (bookingData) => {
   const startDateTime = new Date(`${date}T${startTime}+05:30`);
   let endDateTime = new Date(`${date}T${endTime}+05:30`);
 
-  // Handle midnight (00:00) end time - means end of day/next day midnight
-  if (endTime === '00:00') {
-    endDateTime.setDate(endDateTime.getDate() + 1);
-  }
-
-  if (startDateTime >= endDateTime) {
-    const error = new Error('End time must be after start time');
+  if (startDateTime.getTime() === endDateTime.getTime()) {
+    const error = new Error('Start and end time cannot be the same');
     error.statusCode = 400;
     throw error;
   }
 
-  // The conflict check uses the room name string
-  const conflictingBooking = await Booking.findOne({
+  // Overnight booking: end time before start time on the same calendar day
+  // means the booking wraps past midnight into the next day.
+  if (endDateTime < startDateTime) {
+    endDateTime.setDate(endDateTime.getDate() + 1);
+  }
+
+  const conflictingBookings = await Booking.find({
     room: room,
     startTime: { $lt: endDateTime },
     endTime: { $gt: startDateTime },
-  });
+  }).sort({ startTime: 1 });
 
-  if (conflictingBooking) {
-    const conflictStart = new Date(conflictingBooking.startTime);
-    const conflictEnd = new Date(conflictingBooking.endTime);
-    const startHour = conflictStart.getHours().toString().padStart(2, '0');
-    const endHour = conflictEnd.getHours().toString().padStart(2, '0');
+  if (conflictingBookings.length > 0) {
+    const conflicts = conflictingBookings.map((b) => ({
+      name: b.name,
+      title: b.title,
+      startTime: b.startTime.toISOString(),
+      endTime: b.endTime.toISOString(),
+    }));
 
-    const error = new Error(`Booking clashes with ${conflictingBooking.name}'s booking (${startHour}:00 - ${endHour}:00)`);
+    const n = conflicts.length;
+    const error = new Error(
+      `This time overlaps with ${n} existing booking${n > 1 ? 's' : ''}.`
+    );
     error.statusCode = 409;
+    error.conflicts = conflicts;
     throw error;
   }
 
