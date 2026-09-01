@@ -163,43 +163,49 @@ const BookingTimeline = () => {
   }, [selectedDate, selectedRoom]);
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background p-3 sm:p-6 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* User Info Bar */}
-        <div className="flex items-center justify-between bg-card rounded-lg p-3 border border-border">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <User className="h-4 w-4" />
-            <span>Welcome, <strong className="text-foreground">{user?.name || 'User'}</strong></span>
+        <div className="flex items-center justify-between bg-card rounded-xl p-3 sm:p-3.5 border border-border gap-2 shadow-sm">
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground min-w-0">
+            <User className="h-4 w-4 shrink-0 text-primary" />
+            <span className="truncate">
+              Welcome, <strong className="text-foreground font-semibold">{user?.name || 'User'}</strong>
+            </span>
           </div>
-          <Button variant="ghost" size="sm" onClick={logout} className="text-muted-foreground hover:text-destructive">
-            <LogOut className="h-4 w-4 mr-1" />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={logout} 
+            className="text-xs sm:text-sm h-8 px-2 sm:px-3 text-muted-foreground hover:text-destructive shrink-0"
+          >
+            <LogOut className="h-4 w-4 mr-1.5" />
             Logout
           </Button>
         </div>
 
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground">
               Welcome {user?.name}
             </h1>
-            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-              Timeline for booking ESR and VP room • Book available slots
-              instantly
+            <p className="text-muted-foreground mt-1 text-xs sm:text-sm md:text-base leading-relaxed">
+              Timeline for booking ESR and VP room • Book available slots instantly
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <div className="flex flex-col xs:flex-row sm:flex-row gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
             <Button
               variant="secondary"
               onClick={() => navigate('/my-bookings')}
-              className="flex items-center justify-center gap-2 w-full sm:w-auto"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto h-10 sm:h-11 px-4 text-xs sm:text-sm font-medium"
             >
               My Bookings
             </Button>
             <Button
               onClick={() => setShowBookingForm(true)}
-              className="flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 w-full sm:w-auto"
+              className="flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 w-full sm:w-auto h-10 sm:h-11 px-4 text-xs sm:text-sm font-medium shadow-sm"
             >
               <Plus className="h-4 w-4" />
               New Booking
@@ -208,15 +214,15 @@ const BookingTimeline = () => {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="p-4 sm:p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <Card className="p-3.5 sm:p-6 rounded-xl border border-border shadow-sm">
             <DatePicker
               selectedDate={selectedDate}
               onDateSelect={setSelectedDate}
             />
           </Card>
 
-          <Card className="p-4 sm:p-6">
+          <Card className="p-3.5 sm:p-6 rounded-xl border border-border shadow-sm">
             <RoomSelector
               selectedRoom={selectedRoom}
               onRoomSelect={setSelectedRoom}
@@ -225,7 +231,7 @@ const BookingTimeline = () => {
         </div>
 
         {/* Timeline View */}
-        <Card className="p-4 sm:p-6 overflow-x-auto">
+        <Card className="p-3.5 sm:p-6 rounded-xl border border-border shadow-sm overflow-hidden">
           <TimelineView
             selectedDate={selectedDate}
             selectedRoom={selectedRoom}

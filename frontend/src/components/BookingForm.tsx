@@ -147,36 +147,37 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] w-[95vw] p-6">
-        <DialogHeader>
-          <DialogTitle>New Room Booking</DialogTitle>
-          <DialogDescription>
-            Fill in the details below to book a room. All fields marked with *
-            are required.
+      <DialogContent className="w-[95vw] sm:max-w-[560px] p-4 sm:p-6 max-h-[90vh] overflow-y-auto rounded-xl sm:rounded-2xl">
+        <DialogHeader className="space-y-1 text-left">
+          <DialogTitle className="text-lg sm:text-xl font-bold text-foreground">
+            New Room Booking
+          </DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
+            Fill in the details below to book a room. All fields marked with * are required.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-6 pb-2"
+            className="space-y-4 sm:space-y-5 pt-2"
           >
             {/* Name + Title */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name *</FormLabel>
+                    <FormLabel className="text-xs sm:text-sm">Name *</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         disabled
-                        className="bg-muted cursor-not-allowed"
+                        className="h-10 sm:h-11 text-sm bg-muted cursor-not-allowed"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
@@ -185,14 +186,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Title/Position *</FormLabel>
+                    <FormLabel className="text-xs sm:text-sm">Title/Position *</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="e.g., Technology Coordinator"
+                        placeholder="e.g., Coordinator"
+                        className="h-10 sm:h-11 text-sm"
                         {...field}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
@@ -204,25 +206,25 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               name="room"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Room *</FormLabel>
+                  <FormLabel className="text-xs sm:text-sm">Room *</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10 sm:h-11 text-sm">
                         <SelectValue placeholder="Select a room" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {rooms.map((room) => (
-                        <SelectItem key={room.value} value={room.value}>
+                        <SelectItem key={room.value} value={room.value} className="text-sm">
                           {room.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
+                  <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
@@ -233,7 +235,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               name="date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Date *</FormLabel>
+                  <FormLabel className="text-xs sm:text-sm">Date *</FormLabel>
                   <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -241,7 +243,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                           type="button"
                           variant="outline"
                           className={cn(
-                            'w-full pl-3 text-left font-normal',
+                            'w-full h-10 sm:h-11 pl-3 text-left font-normal text-sm',
                             !field.value && 'text-muted-foreground'
                           )}
                         >
@@ -254,7 +256,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 max-w-[calc(100vw-2rem)]" align="start">
                       <Calendar
                         mode="single"
                         selected={field.value}
@@ -272,43 +274,43 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                       />
                     </PopoverContent>
                   </Popover>
-                  <FormMessage />
+                  <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
 
             {/* Start + End Time */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <FormField
                 control={form.control}
                 name="startTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start Time *</FormLabel>
+                    <FormLabel className="text-xs sm:text-sm">Start Time *</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
-                          <Clock className="w-4 h-4 mr-2" />
+                        <SelectTrigger className="h-10 sm:h-11 text-sm">
+                          <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
                           <SelectValue placeholder="Select start time" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="max-h-56">
                         {timeSlots
                           .filter((time) => {
                             if (!isToday(form.watch('date'))) return true;
                             return parseInt(time.value) > getCurrentHour();
                           })
                           .map((time) => (
-                            <SelectItem key={time.value} value={time.value}>
+                            <SelectItem key={time.value} value={time.value} className="text-sm">
                               {time.label}
                             </SelectItem>
                           ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
@@ -318,18 +320,18 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                 name="endTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>End Time *</FormLabel>
+                    <FormLabel className="text-xs sm:text-sm">End Time *</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
-                          <Clock className="w-4 h-4 mr-2" />
+                        <SelectTrigger className="h-10 sm:h-11 text-sm">
+                          <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
                           <SelectValue placeholder="Select end time" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="max-h-56">
                         {timeSlots
                           .filter((time) => {
                             if (!isToday(form.watch('date'))) return true;
@@ -339,13 +341,13 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                             return hour > getCurrentHour();
                           })
                           .map((time) => (
-                            <SelectItem key={time.value} value={time.value}>
+                            <SelectItem key={time.value} value={time.value} className="text-sm">
                               {time.label}
                             </SelectItem>
                           ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
@@ -357,28 +359,34 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               name="purpose"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Purpose (Optional)</FormLabel>
+                  <FormLabel className="text-xs sm:text-sm">Purpose (Optional)</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Brief description of the meeting purpose"
-                      className="resize-none min-h-[80px]"
+                      className="resize-none min-h-[75px] text-sm"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
 
-            <DialogFooter className="flex gap-2 pt-4">
+            <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-3 sm:pt-4 sm:justify-end">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
+                className="w-full sm:w-auto h-10 text-xs sm:text-sm"
               >
                 Cancel
               </Button>
-              <Button type="submit">Create Booking</Button>
+              <Button 
+                type="submit"
+                className="w-full sm:w-auto h-10 text-xs sm:text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Create Booking
+              </Button>
             </DialogFooter>
           </form>
         </Form>
