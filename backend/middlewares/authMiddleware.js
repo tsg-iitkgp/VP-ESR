@@ -21,6 +21,7 @@ const verifyAuth = async (req, res, next) => {
             id: decoded.id,
             email: decoded.email,
             role: decoded.role,
+            por: decoded.por || '',
             name: decoded.name ? decoded.name : decoded.email.split('@')[0]
         };
         return next();

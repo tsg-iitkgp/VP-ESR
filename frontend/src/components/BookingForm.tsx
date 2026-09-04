@@ -101,27 +101,31 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   const [calendarOpen, setCalendarOpen] = React.useState(false);
   const { user } = useAuth();
 
-  const form = useForm<BookingFormData>({
-    resolver: zodResolver(bookingSchema),
-    defaultValues: {
-      name: user?.name || '',
-      title: '',
-      room: '',
-      startTime: '',
-      endTime: '',
-      purpose: '',
-    },
+  const getInitialValues = () => ({
+    name: user?.name || '',
+    title: user?.por || '',
+    room: '',
+    startTime: '',
+    endTime: '',
+    purpose: '',
   });
 
-  /* 🔹 Sync JWT name */
+  const form = useForm<BookingFormData>({
+    resolver: zodResolver(bookingSchema),
+    defaultValues: getInitialValues(),
+  });
+
+  /* 🔹 Sync JWT name and position (POR) */
   React.useEffect(() => {
-    if (user?.name) {
-      form.reset({
-        ...form.getValues(),
-        name: user.name,
-      });
+    if (user) {
+      if (user.name) {
+        form.setValue('name', user.name);
+      }
+      if (user.por && !form.getValues('title')) {
+        form.setValue('title', user.por);
+      }
     }
-  }, [user, form]);
+  }, [user, form, open]);
 
   /* 🔹 Date helpers */
   const isToday = (date?: Date) => {
@@ -141,7 +145,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     if (!data.date) return;
 
     onSubmit(data);
-    form.reset();
+    form.reset(getInitialValues());
     onOpenChange(false);
   };
 
@@ -186,10 +190,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs sm:text-sm">Title/Position *</FormLabel>
+                    <FormLabel className="text-xs sm:text-sm">Position / POR *</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="e.g., Coordinator"
+                        placeholder="e.g., GENERAL SECRETARY"
                         className="h-10 sm:h-11 text-sm"
                         {...field}
                       />

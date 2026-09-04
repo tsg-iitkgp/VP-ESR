@@ -12,6 +12,7 @@ interface User {
   name: string;
   email: string;
   role: string;
+  por?: string;
 }
 
 interface DecodedToken {
@@ -19,6 +20,7 @@ interface DecodedToken {
   id?: string;
   email?: string;
   role?: string;
+  por?: string;
   name?: string;
   iss?: string;
   aud?: string;
@@ -75,6 +77,7 @@ const getAuthStateFromToken = (): User | null => {
       localStorage.removeItem('token');
       localStorage.removeItem('role');
       localStorage.removeItem('name');
+      localStorage.removeItem('por');
       return null;
     }
 
@@ -82,20 +85,25 @@ const getAuthStateFromToken = (): User | null => {
     if (decoded.iss !== 'admin-backend' || decoded.aud !== 'vp-esr') {
       console.error('Invalid token claims');
       localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('name');
+      localStorage.removeItem('por');
       return null;
     }
 
     return {
       id: decoded.id || 'unknown',
-      name: localStorage.getItem('name') || '',
+      name: localStorage.getItem('name') || decoded.name || '',
       email: decoded.email || '',
       role: decoded.role || localStorage.getItem('role') || 'viewer',
+      por: decoded.por || localStorage.getItem('por') || '',
     };
   } catch (error) {
     console.error('Token validation failed:', error);
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('name');
+    localStorage.removeItem('por');
     return null;
   }
 };
@@ -110,6 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       const name = urlParams.get('name');
+      const por = urlParams.get('por');
 
       if (code) {
         // Clean URL immediately
@@ -122,10 +131,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Exchange code for token via backend
         const result = await exchangeCodeForToken(code);
         if (result) {
-          result.user.name = name;
+          if (name) result.user.name = name;
+          if (por && !result.user.por) result.user.por = por;
           localStorage.setItem('token', result.token);
           if (result.user.role) localStorage.setItem('role', result.user.role);
           if (result.user.name) localStorage.setItem('name', result.user.name);
+          if (result.user.por) localStorage.setItem('por', result.user.por);
           setUser(result.user);
         }
         setIsLoading(false);
@@ -136,7 +147,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const existingUser = getAuthStateFromToken();
       setUser(existingUser);
       setIsLoading(false);
-      console.log(localStorage.getItem('name'));
     };
 
     initAuth();
@@ -146,6 +156,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('name');
+    localStorage.removeItem('por');
     setUser(null);
     window.location.href = import.meta.env.VITE_ADMIN_LOGIN_URL;
   };
