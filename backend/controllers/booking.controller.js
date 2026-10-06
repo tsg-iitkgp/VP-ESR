@@ -14,7 +14,9 @@ export const createBooking = asyncHandler(async (req, res) => {
     res.status(201).json(newBooking);
   } catch (error) {
     const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({ message: error.message || 'Failed to create booking' });
+    const body = { message: error.message || 'Failed to create booking' };
+    if (error.conflicts) body.conflicts = error.conflicts;
+    res.status(statusCode).json(body);
   }
 });
 

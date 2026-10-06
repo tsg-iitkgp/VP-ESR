@@ -8,6 +8,7 @@ const requiredEnvVars = [
   'PORT',
   'MONGODB_URI',
   'JWT_SECRET',
+  'APNAINSTI_JWT_SECRET',
   'AUTH_SERVER_URL',
 ];
 for (const key of requiredEnvVars) {
