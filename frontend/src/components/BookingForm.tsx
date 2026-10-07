@@ -83,6 +83,7 @@ const rooms = [
     label: "ESR Room - Elected Student's Representative Room",
   },
   { value: 'VP Room', label: 'VP Room - Vice President Room' },
+  { value: 'Board Room', label: 'Board Room - Executive Board Room' },
 ];
 
 const timeSlots = Array.from({ length: 24 }, (_, i) => {

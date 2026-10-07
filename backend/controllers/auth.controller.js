@@ -56,3 +56,45 @@ export const exchangeCode = async (req, res) => {
     res.status(500).json({ message: 'Failed to exchange authorization code' });
   }
 };
+
+// POST /api/auth/dev-login
+// Generates a valid test JWT with valid iss, aud and roles for local development
+export const devLogin = async (req, res) => {
+  try {
+    const {
+      name = 'Test User',
+      email = 'test@example.com',
+      role = 'admin',
+      por = 'VP General',
+    } = req.body || {};
+
+    const payload = {
+      id: 'dev-user-001',
+      name,
+      email,
+      role,
+      por,
+      iss: 'admin-backend',
+      aud: 'vp-esr',
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: '7d',
+    });
+
+    res.status(200).json({
+      token,
+      user: {
+        id: payload.id,
+        name: payload.name,
+        email: payload.email,
+        role: payload.role,
+        por: payload.por,
+      },
+    });
+  } catch (error) {
+    console.error('Error generating dev token:', error);
+    res.status(500).json({ message: 'Failed to generate dev token' });
+  }
+};
+
