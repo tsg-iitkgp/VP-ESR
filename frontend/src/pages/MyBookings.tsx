@@ -199,12 +199,7 @@ const MyBookings: React.FC = () => {
             .map((booking) => {
               const startDate = new Date(booking.startTime);
               const endDate = new Date(booking.endTime);
-              const roomName =
-                booking.room === 'esr'
-                  ? 'ESR Room'
-                  : booking.room === 'boardroom'
-                  ? 'Board Room'
-                  : 'VP Room';
+              const roomName = booking.room === 'esr' ? 'ESR Room' : 'VP Room';
 
               return (
                 <div

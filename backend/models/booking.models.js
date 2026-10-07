@@ -24,7 +24,7 @@ const bookingSchema = new mongoose.Schema(
     room: {
       type: String,
       required: true,
-      enum: ['esr', 'vp', 'boardroom'], 
+      enum: ['esr', 'vp'], 
     },
   },
   {

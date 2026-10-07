@@ -16,12 +16,7 @@ const rooms = [
     id: 'VP Room',
     name: 'VP Room',
     description: 'VP Room - Vice President meeting Room',
-  },
-  {
-    id: 'Board Room',
-    name: 'Board Room',
-    description: 'Board Room - Executive meeting and conference room',
-  },
+  }
 ];
 
 export const RoomSelector: React.FC<RoomSelectorProps> = ({ selectedRoom, onRoomSelect }) => {
