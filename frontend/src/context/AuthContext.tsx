@@ -31,6 +31,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   logout: () => void;
+  devLogin: (role?: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -60,6 +61,36 @@ const exchangeCodeForToken = async (
     return await response.json();
   } catch (error) {
     console.error('Error exchanging code:', error);
+    return null;
+  }
+};
+
+const performDevLogin = async (
+  role: string = 'admin',
+): Promise<{ token: string; user: User } | null> => {
+  try {
+    const apiUrl = import.meta.env.VITE_APP_API_PREFIX;
+    const response = await fetch(`${apiUrl}/api/auth/dev-login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: 'Dev Admin',
+        email: 'admin@vp-esr.local',
+        role,
+        por: 'VP Development',
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Failed dev login:', await response.text());
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error during dev login:', error);
     return null;
   }
 };
@@ -152,6 +183,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initAuth();
   }, []);
 
+  const devLogin = async (role: string = 'admin'): Promise<boolean> => {
+    setIsLoading(true);
+    const result = await performDevLogin(role);
+    if (result) {
+      localStorage.setItem('token', result.token);
+      if (result.user.role) localStorage.setItem('role', result.user.role);
+      if (result.user.name) localStorage.setItem('name', result.user.name);
+      if (result.user.por) localStorage.setItem('por', result.user.por);
+      setUser(result.user);
+      setIsLoading(false);
+      return true;
+    }
+    setIsLoading(false);
+    return false;
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
@@ -163,7 +210,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, isLoading, logout }}
+      value={{ user, isAuthenticated: !!user, isLoading, logout, devLogin }}
     >
       {children}
     </AuthContext.Provider>
