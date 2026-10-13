@@ -76,9 +76,15 @@ const BookingTimeline = () => {
       const data = await res.json();
       // console.log('📥 Raw bookings from backend:', data);
 
+      const getRoomDisplayName = (roomCode: string) => {
+        if (roomCode === 'esr') return 'ESR Room';
+        if (roomCode === 'boardroom') return 'Board Room';
+        return 'VP Room';
+      };
+
       const transformed: Booking[] = data
         .filter((b: any) => {
-          const roomName = b.room === 'esr' ? 'ESR Room' : 'VP Room';
+          const roomName = getRoomDisplayName(b.room);
           return roomName === selectedRoom;
         })
         .map((b: any) => {
@@ -93,7 +99,7 @@ const BookingTimeline = () => {
             title: b.title,
             startTime: `${startHour}:00`,
             endTime: `${endHour}:00`,
-            room: b.room === 'esr' ? 'ESR Room' : 'VP Room',
+            room: getRoomDisplayName(b.room),
             date: startDate,
             purpose: b.description,
           };
@@ -111,10 +117,16 @@ const BookingTimeline = () => {
   // ✅ POST new booking
   const handleBookingSubmit = async (bookingData: any) => {
     try {
+      const getBackendRoomCode = (roomName: string) => {
+        if (roomName === 'ESR Room') return 'esr';
+        if (roomName === 'Board Room') return 'boardroom';
+        return 'vp';
+      };
+
       const body = {
         name: bookingData.name,
         title: bookingData.title,
-        room: bookingData.room === 'ESR Room' ? 'esr' : 'vp',
+        room: getBackendRoomCode(bookingData.room),
         date: formatDate(bookingData.date),
         startTime: bookingData.startTime,
         endTime: bookingData.endTime,
@@ -191,7 +203,7 @@ const BookingTimeline = () => {
               Welcome {user?.name}
             </h1>
             <p className="text-muted-foreground mt-1 text-xs sm:text-sm md:text-base leading-relaxed">
-              Timeline for booking ESR and VP room • Book available slots instantly
+              Timeline for booking ESR, VP, and Board room • Book available slots instantly
             </p>
           </div>
 

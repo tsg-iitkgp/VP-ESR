@@ -20,10 +20,10 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         );
     }
 
-    // Not authenticated - redirect to login
+    // Not authenticated - redirect to local login
     if (!isAuthenticated) {
-        console.log('Not authenticated, redirecting to login...');
-        window.location.href = import.meta.env.VITE_ADMIN_LOGIN_URL;
+        console.log('Not authenticated, redirecting to /login...');
+        window.location.href = '/login';
         return null;
     }
 
